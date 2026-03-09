@@ -51,6 +51,7 @@ app.use(passport.session());
 // Routes
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
+const flightRoutes = require("./routes/flightRoutes");
 
 // Test route
 app.get("/", (req, res) => {
@@ -60,6 +61,7 @@ app.get("/", (req, res) => {
 // API routes
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
+app.use("/flights", flightRoutes);
 
 // Start server
 
