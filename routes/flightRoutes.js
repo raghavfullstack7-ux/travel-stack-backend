@@ -4,6 +4,6 @@ const FlightController = require("../controllers/FlightController");
 const router = express.Router();
 
 router.get("/search", FlightController.searchFlights);
-router.get("/cities", FlightController.searchCities);
+router.post("/sync", FlightController.saveFlights);
 
 module.exports = router;

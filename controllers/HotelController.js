@@ -1,4 +1,4 @@
-const { searchHotels: findHotels } = require("../services/amadeus");
+const { searchHotels: findHotels } = require("../services/aviation");
 
 const searchHotels = async (req, res) => {
     try {

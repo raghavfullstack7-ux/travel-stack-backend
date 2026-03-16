@@ -1,62 +1,89 @@
-const { searchFlightOffers } = require("../services/amadeus");
+const Flight = require("../models/Flight");
+const { getFlyingFlights } = require("../services/aviation");
 
+/**
+ * Search flights from database
+ */
 const searchFlights = async (req, res) => {
   try {
-    const {
-      from,
-      to,
-      date,
-      adults = "1",
-      max = "20",
-      nonstop = "false",
-      currency = "INR",
-    } = req.query;
+    const { from, to, date, max = 20 } = req.query;
 
     if (!from || !to || !date) {
       return res.status(400).json({
         status: false,
-        message: "from, to and date are required query params.",
+        message: "from, to and date query params are required",
       });
     }
 
-    const offers = await searchFlightOffers({
-      originLocationCode: String(from).toUpperCase(),
-      destinationLocationCode: String(to).toUpperCase(),
-      departureDate: date,
-      adults: Math.max(1, Number(adults) || 1),
-      max: Math.max(1, Math.min(50, Number(max) || 20)),
-      nonStop: nonstop === "true",
-      currencyCode: currency || "INR",
-    });
+    const limit = Math.min(Math.max(Number(max) || 20, 1), 50);
+
+    const startDate = new Date(date);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const flights = await Flight.find({
+      origin: from.toUpperCase(),
+      destination: to.toUpperCase(),
+      departureTime: { $gte: startDate, $lte: endDate },
+    })
+      .limit(limit)
+      .lean();
 
     return res.status(200).json({
       status: true,
-      message: "Flight offers fetched successfully.",
-      data: offers,
+      message: "Flights fetched successfully",
+      data: flights,
     });
   } catch (error) {
+    console.error("searchFlights error:", error);
+
     return res.status(500).json({
       status: false,
-      message: error.message || "Failed to fetch flight offers.",
+      message: "Failed to fetch flights",
     });
   }
 };
 
-const searchCities = async (req, res) => {
+/**
+ * Save flights from external service to MongoDB
+ */
+const saveFlights = async (req, res) => {
   try {
-    const { keyword } = req.query;
-    if (!keyword || keyword.length < 2) {
-      return res.status(200).json({ status: true, data: [] });
-    }
-    const { searchCities: findCities } = require("../services/amadeus");
-    const cities = await findCities(keyword);
-    return res.status(200).json({ status: true, data: cities });
+    const flightsData = await getFlyingFlights();
+
+    console.log(`Fetched ${flightsData.length} flights from aviation service`);
+
+    const flightsToSave = flightsData.map((flight) => ({
+      flightNumber: flight.flight?.iata,
+      airline: flight.airline?.name,
+      origin: flight.departure?.iata, // use IATA
+      destination: flight.arrival?.iata, // use IATA
+      departureTime: flight.departure?.scheduled,
+      arrivalTime: flight.arrival?.scheduled,
+      price: Math.floor(Math.random() * 500) + 100,
+    }));
+
+    const savedFlights = await Flight.insertMany(flightsToSave, {
+      ordered: false,
+    });
+
+    return res.status(201).json({
+      status: true,
+      message: "Flights saved successfully",
+      count: savedFlights.length,
+      data: savedFlights,
+    });
   } catch (error) {
-    return res.status(500).json({ status: false, message: error.message });
+    console.error("saveFlights error:", error);
+
+    return res.status(500).json({
+      status: false,
+      message: "Failed to save flights",
+    });
   }
 };
 
 module.exports = {
   searchFlights,
-  searchCities,
+  saveFlights,
 };

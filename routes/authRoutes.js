@@ -1,4 +1,5 @@
 const express = require("express");
+const AdminAuthController = require("../controllers/AdminAuthController");
 const AuthController = require("../controllers/AuthController");
 const { verifyToken, generateToken } = require("../services/jwt");
 const passport = require("../config/passport");
@@ -11,6 +12,16 @@ router.post("/login", AuthController.login);
 router.post("/forgotpassword", AuthController.forgotPassword);
 router.post("/resetpassword", verifyToken, AuthController.resetPassword);
 router.post("/verify", AuthController.verify);
+
+
+
+router.post("/admin/login", AdminAuthController.login);
+router.post("/admin/forgotpassword", AdminAuthController.forgotPassword);
+router.post("/admin/resetpassword", verifyToken, AdminAuthController.resetPassword);
+router.post("/admin/verify", AdminAuthController.verify);
+
+
+
 
 // Google OAuth
 router.get(
