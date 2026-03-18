@@ -5,9 +5,11 @@ const instance = new razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
+const crypto = require("crypto");
+
 const createOrder = async (amount) => {
     const options = {
-        amount: amount * 100, // Amount in paise
+        amount: Math.round(amount * 100), // Amount in paise
         currency: 'INR',
         receipt: `receipt_${Date.now()}`
     };
@@ -19,7 +21,15 @@ const createOrder = async (amount) => {
     }
 }
 
+const verifySignature = (orderId, paymentId, signature) => {
+    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+    hmac.update(orderId + "|" + paymentId);
+    const generatedSignature = hmac.digest("hex");
+    return generatedSignature === signature;
+}
+
 module.exports = {
-    createOrder
+    createOrder,
+    verifySignature
 }
 

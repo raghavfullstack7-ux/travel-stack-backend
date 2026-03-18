@@ -46,6 +46,36 @@ exports.getMyBookings = async (req, res) => {
     }
 };
 
+exports.verifyPayment = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = req.body;
+        const { verifySignature } = require("../services/razorpay");
+
+        const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+        if (!isValid) {
+            return res.status(400).json({ success: false, message: "Invalid signature" });
+        }
+
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: "Booking not found" });
+        }
+
+        booking.status = "confirmed";
+        booking.paymentDetails = {
+            paymentId: razorpay_payment_id,
+            orderId: razorpay_order_id,
+            signature: razorpay_signature
+        };
+        await booking.save();
+
+        res.json({ success: true, booking });
+    } catch (error) {
+        console.error("Payment Verification Error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 exports.cancelBooking = async (req, res) => {
     try {
         const booking = await Booking.findOneAndUpdate(
