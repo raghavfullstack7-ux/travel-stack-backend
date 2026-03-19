@@ -6,14 +6,19 @@ const paymentSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    booking: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Booking',
+        required: true
+    },
     amount: {
         type: Number,
         required: true
     },
     status: {
         type: String,
-        enum: ['pending', 'completed', 'failed'],
-        default: 'pending'
+        enum: ['created', 'paid', 'failed'],
+        default: 'created'
     },
     razorpayOrderId: {
         type: String, 

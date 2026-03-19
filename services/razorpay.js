@@ -1,35 +1,24 @@
-const razorpay = require('razorpay');
-
-const instance = new razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-});
-
+const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
-const createOrder = async (amount) => {
-    const options = {
-        amount: Math.round(amount * 100), // Amount in paise
-        currency: 'INR',
-        receipt: `receipt_${Date.now()}`
-    };
-    try {
-        const order = await instance.orders.create(options);
-        return order;
-    } catch (error) {
-        throw error;
-    }
-}
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
-const verifySignature = (orderId, paymentId, signature) => {
-    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
-    hmac.update(orderId + "|" + paymentId);
-    const generatedSignature = hmac.digest("hex");
-    return generatedSignature === signature;
-}
+exports.createOrder = async (amount) => {
+  const options = {
+    amount: Math.round(amount * 100),
+    currency: "INR",
+    receipt: `receipt_${Date.now()}`,
+  };
 
-module.exports = {
-    createOrder,
-    verifySignature
-}
+  return await razorpay.orders.create(options);
+};
 
+exports.verifySignature = (orderId, paymentId, signature) => {
+  const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+  hmac.update(orderId + "|" + paymentId);
+  const generatedSignature = hmac.digest("hex");
+  return generatedSignature === signature;
+};

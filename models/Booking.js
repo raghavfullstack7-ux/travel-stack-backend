@@ -27,6 +27,10 @@ const BookingSchema = new mongoose.Schema({
   },
   providerName: String,
   passengers: Number,
+  paymentDetails: {
+    paymentId: String,
+    orderId: String
+  },
   details: Object // Specific details for the booking
 }, { timestamps: true });
 
