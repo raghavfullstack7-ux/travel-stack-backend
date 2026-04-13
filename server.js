@@ -77,7 +77,7 @@ app.use("/api/translate", translateRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || "127.0.0.1";
+const HOST = process.env.HOST || "0.0.0.0"; // Bind to all interfaces for deployment
 
 app.listen(PORT, HOST, () => {
     console.log(`Server running on http://${HOST}:${PORT}`);

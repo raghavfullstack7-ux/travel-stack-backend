@@ -2,13 +2,17 @@ const passport = require('passport');
 const User = require('../models/User');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
-    },
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  console.error("CRITICAL ERROR: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is missing from environment variables.");
+  console.error("OAuth registration will be skipped to prevent crash, but Google Login will NOT work.");
+} else {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      },
     async (accessToken, refreshToken, profile, done) => {
       try {
         const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
@@ -61,6 +65,7 @@ passport.use(
     }
   )
 );
+}
 
 // Optional for JWT-only auth (no session)
 passport.serializeUser((user, done) => done(null, user));
