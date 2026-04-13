@@ -12,6 +12,7 @@ router.post("/login", AuthController.login);
 router.post("/forgotpassword", AuthController.forgotPassword);
 router.post("/resetpassword", verifyToken, AuthController.resetPassword);
 router.post("/verify", AuthController.verify);
+router.get("/me", verifyToken, AuthController.me);
 
 
 
@@ -38,8 +39,8 @@ router.get(
       // req.user is already the DB user
       const token = generateToken(req.user);
 
-      // Redirect to frontend with JWT
-      const redirectUrl = `${process.env.FRONTEND_URL}/auth/login/success?token=${token}`;
+      // Redirect to frontend with JWT and User Data for hydration
+      const redirectUrl = `${process.env.FRONTEND_URL}/auth/login/success?token=${token}&user=${encodeURIComponent(JSON.stringify(req.user))}`;
       console.log("Redirecting to:", redirectUrl);
       res.redirect(redirectUrl);
     } catch (err) {

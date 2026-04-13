@@ -36,11 +36,16 @@ const register = async (req, res) => {
       email,
       mobile,
       password: hashPassword
-    })
+    });
     
-    const type = email ? "email" : "mobile";
-    const otpData = await generateOTP(type, user._id);
-    return res.status(200).json({ status: true, message: `OTP sent on ${type} Successfully`, data: otpData })
+    // Generate OTP for verification
+    const otpData = await generateOTP(email ? "email" : "mobile", user._id);
+    
+    return res.status(200).json({ 
+        status: true, 
+        message: `User Registered. OTP sent for verification.`, 
+        data: { user, otpData } 
+    });
   } catch (error) {
     return res.status(500).json({ status: false, message: error.message })
   }
@@ -65,26 +70,29 @@ const login = async (req, res) => {
       return res.status(404).json({ status: false, message: "User Not Exist" })
     }
 
-    if (email && Exist.email_verify_at == null) {
-      return res.status(400).json({ status: false, message: "Please verify your email" })
-    }
-    if (mobile && Exist.mobile_verify_at == null) {
-        return res.status(400).json({ status: false, message: "Please verify your mobile" })
-    }
-
     const isMatch = await bcryptjs.compare(password, Exist.password)
     if (!isMatch) {
       return res.status(401).json({ status: false, message: "Invalid Credentials" })
     }
 
-    // Determine type for OTP
-    const type = email ? "email" : "mobile";
-    const otpData = await generateOTP(type, Exist._id);
+    /* Enforcement of verification */
+    if (Exist.email && !Exist.email_verify_at) {
+        const otpData = await generateOTP("email", Exist._id);
+        return res.status(403).json({ 
+            status: false, 
+            message: "Email not verified. OTP sent.", 
+            requiresVerification: true,
+            data: { userId: Exist._id, otpData }
+        });
+    }
+
+    // Return token directly
+    const token = generateToken(Exist);
     
     return res.status(200).json({ 
       status: true, 
-      message: `OTP sent on ${type} Successfully`, 
-      data: otpData 
+      message: `Login Successful`, 
+      data: { user: Exist, token } 
     });
 
   } catch (error) {
@@ -192,4 +200,16 @@ const verify = async (req, res) => {
   }
 }
 
-module.exports = { register, login, forgotPassword, resetPassword, verify }
+const me = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+    return res.status(200).json({ status: true, user });
+  } catch (error) {
+    return res.status(500).json({ status: false, message: error.message });
+  }
+}
+
+module.exports = { register, login, forgotPassword, resetPassword, verify, me }

@@ -16,8 +16,8 @@ const searchAirports = async (req, res) => {
 
     const airports = await Airport.find({
       $or: [
-        // { city: new RegExp(keyword, "i") },
-        // { name: new RegExp(keyword, "i") },
+        { city: new RegExp(keyword, "i") },
+        { name: new RegExp(keyword, "i") },
         { iata: new RegExp(keyword, "i") }
       ]
     })
